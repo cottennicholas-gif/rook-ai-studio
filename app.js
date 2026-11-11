@@ -7,6 +7,7 @@ const makeGifBtn = document.querySelector("#makeGif");
 const progressEl = document.querySelector("#progress");
 const gallery = document.querySelector("#gallery");
 const gifResult = document.querySelector("#gifResult");
+const contentModeEl = document.querySelector("#contentMode");
 let images = [];
 
 function setProgress(message){progressEl.textContent=message;progressEl.classList.add("show")}
@@ -23,8 +24,8 @@ function showImage(url,index){
   foot.append(name,link);tile.append(img,foot);gallery.append(tile);
   makeGifBtn.disabled=images.length<2;
 }
-async function generateOne(prompt,index,total,width,height,steps){
-  const payload={prompt,params:{width,height,steps,n:1,cfg_scale:7},nsfw:false,censor_nsfw:true,r2:true,shared:false};
+async function generateOne(prompt,index,total,width,height,steps,isNsfw){
+  const payload={prompt,params:{width,height,steps,n:1,cfg_scale:7},nsfw:isNsfw,censor_nsfw:!isNsfw,r2:true,shared:false};
   const start=await fetch(`${API}/generate/async`,{method:"POST",headers:headers(),body:JSON.stringify(payload)});
   if(!start.ok) throw new Error(`AI Horde rejected the request (${start.status}).`);
   const job=await start.json();
@@ -61,7 +62,8 @@ generateBtn.addEventListener("click",async()=>{
   let succeeded=0;
   try{
     for(let i=0;i<total;i++){
-      const url=await generateOne(prompt,i,total,width,height,steps);
+     const isNsfw=contentModeEl.value==="nsfw";
+const url=await generateOne(prompt,i,total,width,height,steps,isNsfw);
       showImage(url,images.length);succeeded++;
     }
     setProgress(`All done. ${succeeded} image${succeeded===1?"":"s"} ready.`);
