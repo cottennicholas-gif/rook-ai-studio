@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111018">
+  <title>Rook AI Studio</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div class="mark">R<span>✦</span></div>
+      <div>
+        <p class="eyebrow">YOUR CREATIVE WORKSHOP</p>
+        <h1>Rook AI Studio</h1>
+      </div>
+      <span class="status-pill"><i></i> BETA</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">MAKE SOMETHING WEIRD</p>
+      <h2>Your imagination.<br><em>Rendered.</em></h2>
+      <p class="sub">Describe an image, send it to the community-powered AI Horde, then turn your creations into a GIF.</p>
+    </section>
+
+    <section class="panel">
+      <label for="prompt">WHAT ARE WE MAKING?</label>
+      <textarea id="prompt" rows="4" placeholder="A tiny astronaut tending a garden on the moon, cinematic lighting..."></textarea>
+      <div class="controls">
+        <div class="field">
+          <label for="size">FORMAT</label>
+          <select id="size">
+            <option value="512x512">Square · 512 × 512</option>
+            <option value="512x768">Portrait · 512 × 768</option>
+            <option value="768x512">Landscape · 768 × 512</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="count">IMAGES</label>
+          <select id="count">
+            <option value="1">1 image</option>
+            <option value="2" selected>2 images</option>
+            <option value="3">3 images</option>
+            <option value="4">4 images</option>
+          </select>
+        </div>
+      </div>
+      <button id="generate" class="primary">Generate images <span>↗</span></button>
+      <p class="fine">Uses AI Horde's shared public network. Anonymous requests may wait longer, and availability depends on volunteer workers.</p>
+      <div id="progress" class="progress" aria-live="polite"></div>
+    </section>
+
+    <section class="results">
+      <div class="section-head">
+        <div><p class="eyebrow">YOUR OUTPUTS</p><h2>Gallery</h2></div>
+        <button id="makeGif" class="secondary" disabled>Make a GIF ↗</button>
+      </div>
+      <div id="gallery" class="gallery">
+        <div class="empty"><span>✧</span><p>Your creations will show up here.</p></div>
+      </div>
+      <div id="gifResult" class="gif-result"></div>
+    </section>
+
+    <footer>
+      <span>ROOK AI STUDIO</span>
+      <span>Independent project · Powered by AI Horde</span>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
