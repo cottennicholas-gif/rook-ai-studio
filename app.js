@@ -68,30 +68,99 @@ generateBtn.addEventListener("click",async()=>{
   }catch(err){setProgress(`${err.message}${succeeded?` ${succeeded} image(s) were still saved in your gallery.`:""}`);}
   finally{generateBtn.disabled=false;makeGifBtn.disabled=images.length<2;}
 });
+
 makeGifBtn.addEventListener("click",async()=>{
   if(images.length<2)return;
   if(typeof GIF==="undefined"){setProgress("The GIF encoder couldn't load. Check your connection and refresh.");return;}
-  makeGifBtn.disabled=true;setProgress("Building your GIF…");
+
+  makeGifBtn.disabled=true;
+  gifResult.innerHTML="";
+  setProgress("Preparing GIF frames…");
+
+  let gif;
+  let finished=false;
+  let renderTimer;
+
+  const fail=(message)=>{
+    if(finished)return;
+    finished=true;
+    clearTimeout(renderTimer);
+    try{gif?.abort();}catch(_){}
+    setProgress(message);
+    makeGifBtn.disabled=false;
+  };
+
   try{
-    const gif=new GIF({workers:2,quality:10,width:400,height:400,workerScript:"https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js"});
     const selected=images.slice(-8);
-    for(const url of selected){
-      const img=new Image();img.crossOrigin="anonymous";
-      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("The image host blocked GIF conversion. You can still open and save each image from the gallery."));img.src=url;});
-      gif.addFrame(img,{delay:650,copy:true});
+    const frames=[];
+
+    for(let i=0;i<selected.length;i++){
+      setProgress(`Loading GIF frame ${i+1} of ${selected.length}…`);
+      const img=new Image();
+      img.crossOrigin="anonymous";
+
+      await new Promise((resolve,reject)=>{
+        const timeout=setTimeout(()=>reject(new Error("An image took too long to load. The image host may be blocking access.")),30000);
+        img.onload=()=>{clearTimeout(timeout);resolve();};
+        img.onerror=()=>{clearTimeout(timeout);reject(new Error("The image host blocked GIF conversion. You can still save each image from the gallery."));};
+        img.src=selected[i];
+      });
+
+      frames.push(img);
     }
+
+    setProgress("Encoding GIF…");
+
+    gif=new GIF({
+      workers:2,
+      quality:10,
+      width:400,
+      height:400,
+      workerScript:"https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js"
+    });
+
+    frames.forEach(img=>gif.addFrame(img,{delay:650,copy:true}));
+
     gif.on("finished",blob=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(renderTimer);
+
       const gifUrl=URL.createObjectURL(blob);
-      gifResult.innerHTML="";
-      const img=document.createElement("img");img.src=gifUrl;img.alt="Your generated animated GIF";
-      const a=document.createElement("a");a.href=gifUrl;a.download="rook-ai-studio.gif";a.textContent="Download GIF";
+      const img=document.createElement("img");
+      img.src=gifUrl;
+      img.alt="Your generated animated GIF";
+
+      const a=document.createElement("a");
+      a.href=gifUrl;
+      a.download="rook-ai-studio.gif";
+      a.textContent="Download GIF";
       a.style.cssText="display:inline-block;margin:10px 0;color:#d4c4ff;font-size:13px";
+
       gifResult.append(img,document.createElement("br"),a);
       setProgress("Your GIF is ready.");
       makeGifBtn.disabled=false;
     });
-    gif.on("progress",p=>setProgress(`Building GIF… ${Math.round(p*100)}%`));
-    gif.on("abort",()=>{setProgress("GIF creation was cancelled.");makeGifBtn.disabled=false;});
+
+    gif.on("progress",p=>{
+      if(!finished)setProgress(`Encoding GIF… ${Math.round(p*100)}%`);
+    });
+
+    gif.on("abort",()=>{
+      if(!finished)fail("GIF creation was cancelled.");
+    });
+
+    gif.on("error",()=>{
+      fail("The GIF encoder or background worker failed. Check your connection and try again.");
+    });
+
+    renderTimer=setTimeout(()=>{
+      fail("GIF encoding timed out. The browser may be blocking the GIF worker.");
+    },120000);
+
     gif.render();
-  }catch(err){setProgress(err.message);makeGifBtn.disabled=false;}
+
+  }catch(err){
+    fail(err.message||"Something went wrong while creating the GIF.");
+  }
 });
